@@ -125,11 +125,6 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
     spdlog::info("\tBuffered Projected LineString");
     auto *bufferPoly = util::swapCoordOrder_r(util::reprojectPolygon_r(revReproj, reprojBufferPoly, geosCtx), geosCtx);
     auto bufferGeoPoly = util::asGeoPolygon_r(bufferPoly, geosCtx);
-    for (int i = 0; i < bufferGeoPoly.size(); ++i) {
-        spdlog::info(
-                "Buffer polygon point " + std::to_string(i) + ": " + std::to_string(bufferGeoPoly[i].x()) + ", " +
-                std::to_string(bufferGeoPoly[i].y()) + ", " + std::to_string(bufferGeoPoly[i].z()));
-    }
     spdlog::info("\tConverted to World GeoPolygon");
 
     GEOSGeom_destroy_r(geosCtx, bufferPoly);
@@ -164,7 +159,6 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
     };
     std::vector<Index, Eigen::aligned_allocator<Index>> trajPoints;
     std::map<Index, d4::TimeSlice, decltype(indexCmp)> trajPointMap(indexCmp);
-//    std::vector<ab::CellBooking> provisionalTrajBookings;
 
     spdlog::info("Projecting cell ETAs forward...");
     for (int i = 0; i < lsSize - 1; ++i) {
@@ -179,15 +173,15 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
 
         for (const auto &c: points) {
             // Get the Euclidean distance from the previous point to this point
-            const auto dist = std::sqrt((prevProjP - c).array().square().sum());
+            const auto dist = std::sqrt(((prevProjP - c) * GRID_SCALE_FACTOR).array().square().sum());
             // Project the ETA to this cell based on a linear interpolation of the speed
             posETA = trajectory4D[i].time + std::chrono::seconds(static_cast<int>(dist / trajectory4D[i].speed));
 
             // Buffer around the ETA
             desiredTimeSlice = d4::TimeSlice(posETA - std::chrono::seconds(temporalBackwardBuffer),
                                              posETA + std::chrono::seconds(temporalForwardBuffer));
-            trajPoints.emplace_back(c);
-            trajPointMap.emplace(c, desiredTimeSlice);
+            trajPoints.emplace_back(c * GRID_SCALE_FACTOR);
+            trajPointMap.emplace(c * GRID_SCALE_FACTOR, desiredTimeSlice);
         }
     }
 
@@ -272,6 +266,12 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
         }
     }
 
+    // Sort final bookings by start time
+    std::sort(finalBookings.begin(), finalBookings.end(),
+              [](const auto &a, const auto &b) {
+                  return a.timeSlice.start < b.timeSlice.start;
+              });
+
 
     return finalBookings;
 }
@@ -297,13 +297,13 @@ ab::geoToH3D(int h3Resolution, int verticalResolution, FPScalar latitude, FPScal
     auto h3String = std::string(h3Str);
 
     //Vertical
-    const auto layer = static_cast<unsigned char>(altitude / verticalResolution);
+    const auto layer = altitude / verticalResolution;
     std::stringstream stream;
     stream << std::hex << static_cast<int>(layer);
     std::string hexString = stream.str();
+    if (hexString.length() == 1) hexString = "0" + hexString;
 
-    h3String.replace(h3String.length() - 2, 2, hexString.substr(hexString.length() - 2, 2));
-    return h3String;
+    return h3String.substr(0, h3String.length() - 2) + hexString.substr(0, 2);
 }
 
 std::string ab::geoToS2(int s2Resolution, FPScalar latitude, FPScalar longitude) {
@@ -322,11 +322,11 @@ ab::geoToS23D(int s2Resolution, int verticalResolution, FPScalar latitude, FPSca
     auto lateralS2Index = parentCellId.ToToken();
 
     // Vertical
-    const auto layer = static_cast<unsigned char>(altitude / verticalResolution);
+    const auto layer = altitude / verticalResolution;
     std::stringstream stream;
     stream << std::hex << static_cast<int>(layer);
     std::string hexString = stream.str();
+    if (hexString.length() == 1) hexString = "0" + hexString;
 
-    lateralS2Index.replace(lateralS2Index.length() - 2, 2, hexString.substr(hexString.length() - 2, 2));
-    return lateralS2Index;
+    return lateralS2Index.substr(0, lateralS2Index.length() - 2) + hexString.substr(0, 2);
 }
