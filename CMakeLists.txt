@@ -184,7 +184,16 @@ else ()
 endif ()
 
 
-if (BUILD_TESTING OR $ENV{CLION_IDE})
+###########################################################
+# Python Bindings
+###########################################################
+add_subdirectory(extern/pybind11)
+add_subdirectory(python)
+
+###########################################################
+# Testing
+###########################################################
+if (BUILD_TESTING OR DEFINED $ENV{CLION_IDE})
     enable_testing()
     add_subdirectory(test)
 endif ()
