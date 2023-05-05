@@ -25,10 +25,6 @@ if (CCACHE)
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
 endif ()
 
-option(AB_BUILD_SERVER "Build the airspacebooking REST API server" ON)
-option(AB_BUILD_TESTS "Build airspacebooking tests" OFF)
-set(AB_SERVER_FILES_PATH "server_files/" CACHE STRING "Path for storage of server files. Should be chmod -x!")
-
 ###########################################################
 # Static code analysis
 ###########################################################
@@ -76,7 +72,14 @@ set(ABU_SOURCES
 
 add_subdirectory(src)
 
-add_library(${PROJECT_NAME} ${ABU_SOURCES})
+if (BUILD_SHARED_LIBS)
+    add_library(${PROJECT_NAME} ${ABU_SOURCES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS ON)
+else ()
+    add_library(${PROJECT_NAME} STATIC ${ABU_SOURCES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -139,6 +142,8 @@ find_package(GEOS CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC GEOS::GEOS)
 
 # S2 Geometry needs building from source
+find_package(absl CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC absl::base)
 FETCHCONTENT_DECLARE(
         s2geometry
         GIT_REPOSITORY https://github.com/google/s2geometry.git
