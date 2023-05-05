@@ -98,7 +98,7 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
     auto *trajLs = GEOSGeom_createLineString_r(geosCtx, trajCoordSeq);
     spdlog::info("\tCreated World LineString");
 
-    auto *reprojTrajCoordSeq = util::reprojectCoordinates_r(reproj, trajCoordSeq, geosCtx, true);
+    auto *reprojTrajCoordSeq = util::reprojectCoordinates_r(reproj, trajCoordSeq, geosCtx);
     std::vector<ab::Index> reprojTrajIntCoords(lsSize);
     {
         double x, y, z;
@@ -178,10 +178,6 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
         ab::d4::TimeSlice desiredTimeSlice({}, {}); // Initialise with random values
 
         for (const auto &c: points) {
-            const auto projCoord = util::reprojectCoordinate_r(revReproj, c.x() * GRID_SCALE_FACTOR,
-                                                               c.y() * GRID_SCALE_FACTOR, c.z() * GRID_SCALE_FACTOR);
-            const auto cellWorldCoord = ab::Position(projCoord.xyz.x, projCoord.xyz.y, projCoord.xyz.z);
-
             // Get the Euclidean distance from the previous point to this point
             const auto dist = std::sqrt((prevProjP - c).array().square().sum());
             // Project the ETA to this cell based on a linear interpolation of the speed
@@ -233,7 +229,7 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
                 const Index xyzC{x, y, z};
                 const auto projCoord = util::reprojectCoordinate_r(revReproj, xyzC.x(), xyzC.y(), xyzC.z());
                 clearedTimeSlices.emplace_back(desiredTimeSlice,
-                                               indexer(projCoord.xyz.x, projCoord.xyz.y, projCoord.xyz.z));
+                                               indexer(projCoord.xyz.y, projCoord.xyz.x, projCoord.xyz.z));
             }
         }
     }

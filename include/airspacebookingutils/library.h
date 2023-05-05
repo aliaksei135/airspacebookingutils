@@ -8,7 +8,7 @@
 
 namespace ab {
     namespace d4 {
-        typedef std::chrono::time_point<std::chrono::steady_clock> TimeInstant;
+        typedef std::chrono::system_clock::time_point TimeInstant;
 
         struct TimeSlice {
             TimeInstant start;
@@ -67,22 +67,63 @@ namespace ab {
         }
     };
 
-
+    /**
+     * @brief Get the H3 cells that are intersected by the trajectory with their time slices
+     * @param trajectory4D a vector of 4D state vectors
+     * @param temporalBackwardBuffer the temporal buffer applied before the expected cell ETA in seconds
+     * @param temporalForwardBuffer the temporal buffer applied after the expected cell ETA in seconds
+     * @param spatialLateralBuffer the lateral spatial buffer applied to the trajectory in meters
+     * @param spatialVerticalBuffer the vertical spatial buffer applied to the trajectory in meters
+     * @param h3Resolution the H3 resolution to use
+     * @return
+     */
     std::vector<CellBooking>
     getH3CellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int temporalBackwardBuffer = 60 * 5,
                       int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                       FPScalar spatialVerticalBuffer = 30, int h3Resolution = 8);
 
+    /**
+     * @brief Get the H3D cells that are intersected by the trajectory with their time slices
+     * @param trajectory4D a vector of 4D state vectors
+     * @param temporalBackwardBuffer the temporal buffer applied before the expected cell ETA in seconds
+     * @param temporalForwardBuffer the temporal buffer applied after the expected cell ETA in seconds
+     * @param spatialLateralBuffer the lateral spatial buffer applied to the trajectory in meters
+     * @param spatialVerticalBuffer the vertical spatial buffer applied to the trajectory in meters
+     * @param h3Resolution the H3 resolution to use
+     * @param verticalResolution the vertical resolution of the grid cells in meters
+     * @return
+     */
     std::vector<CellBooking>
     getH3DCellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int temporalBackwardBuffer = 60 * 5,
                        int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                        FPScalar spatialVerticalBuffer = 30, int h3Resolution = 8, int verticalResolution = 40);
 
+    /**
+     * @brief Get the S2 cells that are intersected by the trajectory with their time slices
+     * @param trajectory4D a vector of 4D state vectors
+     * @param temporalBackwardBuffer the temporal buffer applied before the expected cell ETA in seconds
+     * @param temporalForwardBuffer the temporal buffer applied after the expected cell ETA in seconds
+     * @param spatialLateralBuffer the lateral spatial buffer applied to the trajectory in meters
+     * @param spatialVerticalBuffer the vertical spatial buffer applied to the trajectory in meters
+     * @param s2Resolution the S2 resolution to use
+     * @return
+     */
     std::vector<CellBooking>
     getS2CellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int temporalBackwardBuffer = 60 * 5,
                       int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                       FPScalar spatialVerticalBuffer = 30, int s2Resolution = 13);
 
+    /**
+     * @brief Get the S2 3D cells that are intersected by the trajectory with their time slices
+     * @param trajectory4D a vector of 4D state vectors
+     * @param temporalBackwardBuffer the temporal buffer applied before the expected cell ETA in seconds
+     * @param temporalForwardBuffer the temporal buffer applied after the expected cell ETA in seconds
+     * @param spatialLateralBuffer the lateral spatial buffer applied to the trajectory in meters
+     * @param spatialVerticalBuffer the vertical spatial buffer applied to the trajectory in meters
+     * @param s2Resolution the S2 resolution to use
+     * @param verticalResolution the vertical resolution of the grid cells in meters
+     * @return
+     */
     std::vector<CellBooking>
     getS23DCellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int temporalBackwardBuffer = 60 * 5,
                         int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
@@ -97,12 +138,14 @@ namespace ab {
                            FPScalar spatialVerticalBuffer = 30);
 
 
-    std::string geoToH3(int h3Resolution, FPScalar latitude, FPScalar longitude);
+    std::string
+    geoToH3(int h3Resolution, FPScalar latitude, FPScalar longitude);
 
     std::string
     geoToH3D(int h3Resolution, int verticalResolution, FPScalar latitude, FPScalar longitude, FPScalar altitude);
 
-    std::string geoToS2(int s2Resolution, FPScalar latitude, FPScalar longitude);
+    std::string
+    geoToS2(int s2Resolution, FPScalar latitude, FPScalar longitude);
 
     std::string
     geoToS23D(int s2Resolution, int verticalResolution, FPScalar latitude, FPScalar longitude, FPScalar altitude);
