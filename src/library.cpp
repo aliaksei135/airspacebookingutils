@@ -67,6 +67,48 @@ ab::getS23DCellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int 
                                   spatialLateralBuffer, spatialVerticalBuffer);
 }
 
+
+std::vector<ab::CellBooking>
+ab::getH3VolumeBookings(ab::d4::Volume4D volume4D, int h3Resolution) {
+    std::function<std::string(FPScalar, FPScalar, FPScalar)> indexer = [h3Resolution](FPScalar lat, FPScalar lng,
+                                                                                      FPScalar alt) {
+        return geoToH3(h3Resolution, lat, lng);
+    };
+    return getIndexedCellBookings(volume4D, indexer);
+}
+
+std::vector<ab::CellBooking>
+ab::getH3DVolumeBookings(ab::d4::Volume4D volume4D,
+                         int h3Resolution, int verticalResolution) {
+    std::function<std::string(FPScalar, FPScalar, FPScalar)> indexer = [h3Resolution, verticalResolution](FPScalar lat,
+                                                                                                          FPScalar lng,
+                                                                                                          FPScalar alt) {
+        return geoToH3D(h3Resolution, verticalResolution, lat, lng, alt);
+    };
+    return getIndexedCellBookings(volume4D, indexer);
+}
+
+std::vector<ab::CellBooking>
+ab::getS2VolumeBookings(ab::d4::Volume4D volume4D,
+                        int s2Resolution) {
+    std::function<std::string(FPScalar, FPScalar, FPScalar)> indexer = [s2Resolution](FPScalar lat, FPScalar lng,
+                                                                                      FPScalar alt) {
+        return geoToS2(s2Resolution, lat, lng);
+    };
+    return getIndexedCellBookings(volume4D, indexer);
+}
+
+std::vector<ab::CellBooking> ab::getS23DVolumeBookings(ab::d4::Volume4D volume4D, int s2Resolution,
+                                                       int verticalResolution) {
+    std::function<std::string(FPScalar, FPScalar, FPScalar)> indexer = [s2Resolution, verticalResolution](FPScalar lat,
+                                                                                                          FPScalar lng,
+                                                                                                          FPScalar alt) {
+        return geoToS23D(s2Resolution, verticalResolution, lat, lng, alt);
+    };
+    return getIndexedCellBookings(volume4D, indexer);
+}
+
+
 std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVector4D> trajectory4D,
                                                         const std::function<std::string(double, double,
                                                                                         double)> &indexer,
@@ -276,6 +318,101 @@ std::vector<ab::CellBooking> ab::getIndexedCellBookings(std::vector<d4::StateVec
     return finalBookings;
 }
 
+
+std::vector<ab::CellBooking>
+ab::getIndexedCellBookings(ab::d4::Volume4D volume4D,
+                           const std::function<std::string(double, double, double)> &indexer) {
+    // The Eckert VI projection is good enough for the whole world
+    // The only distances being measured are between points on the same trajectory
+    // rather than the start to end of the trajectory
+    // UTM could be used for a more accurate projection, but the accuracy improvement is smaller
+    // than the applied buffer and is much less than the eventual loss of accuracy after discretisation
+    // to an indexing system
+    const auto pj = util::makeProjObject("EPSG:4326", "ESRI:54010");
+    PJ *reproj = std::get<0>(pj);
+    const auto revpj = util::makeProjObject("ESRI:54010", "EPSG:4326");
+    PJ *revReproj = std::get<0>(revpj);
+    spdlog::info("Made PROJ contexts");
+    GEOSContextHandle_t geosCtx = initGEOS_r(notice, log_and_exit);
+    spdlog::info("Made GEOS Context");
+
+    std::vector<ab::Position> reprojFootprintPoints;
+    std::transform(volume4D.footprint.begin(), volume4D.footprint.end(),
+                   std::back_inserter(reprojFootprintPoints),
+                   [reproj](const auto &p) {
+                       const auto rc = util::reprojectCoordinate_r(reproj, p.x(), p.y(), p.z());
+                       return ab::Position{rc.xyz.x, rc.xyz.y, rc.xyz.z};
+                   });
+    const auto reprojGeoPoly = ab::GeoPolygon(reprojFootprintPoints);
+
+
+    // We store the deconflicted bookings first before committing them to the grid
+    // This is in case the trajectory fails to deconflict at a later stage and we
+    // have already booked previous cells in the grid
+    std::vector<CellBooking> clearedTimeSlices;
+
+    spdlog::info("\tGetting bounds of buffer...");
+    const auto bounds = util::getPolyBounds<3>(reprojGeoPoly);
+    // Cast down to ints as they will be iterated over
+    // The scale is so small that no precision is lost
+    int xMin = static_cast<int>(bounds[0]), xMax = static_cast<int>(bounds[3] + 1);
+    int yMin = static_cast<int>(bounds[1]), yMax = static_cast<int>(bounds[4] + 1);
+
+    spdlog::info("Iterating bounds to book cells...");
+//#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (int x = xMin; x < xMax; x += GRID_SCALE_FACTOR) {
+        for (int y = yMin; y < yMax; y += GRID_SCALE_FACTOR) {
+            const Eigen::Vector2i xyC{x, y};
+            if (!util::isInsidePolygon(reprojGeoPoly, xyC)) continue;
+            for (int z = volume4D.floor; z < volume4D.ceiling; z += GRID_SCALE_FACTOR) {
+                const Index xyzC{x, y, z};
+                const auto projCoord = util::reprojectCoordinate_r(revReproj, xyzC.x(), xyzC.y(), xyzC.z());
+                clearedTimeSlices.emplace_back(volume4D.timeSlice,
+                                               indexer(projCoord.xyz.y, projCoord.xyz.x, projCoord.xyz.z));
+            }
+        }
+    }
+
+    // Map each cell ID to a vector of time slices from clearedTimeSlices
+    std::unordered_map<std::string, std::vector<d4::TimeSlice>> cellTimeSlices;
+    for (const auto &booking: clearedTimeSlices) {
+        cellTimeSlices[booking.cellId].emplace_back(booking.timeSlice);
+    }
+    // For each cell ID in the map, combine all overlapping time slices by checking their intersections
+    std::vector<CellBooking> finalBookings;
+    for (const auto &cellTimeSlice: cellTimeSlices) {
+        const auto &cellId = cellTimeSlice.first;
+        const auto &timeSlices = cellTimeSlice.second;
+        if (timeSlices.size() == 1) {
+            finalBookings.emplace_back(timeSlices[0], cellId);
+            continue;
+        }
+        // Sort time slices by start time
+        std::vector<d4::TimeSlice> sortedTimeSlices = timeSlices;
+        std::sort(sortedTimeSlices.begin(), sortedTimeSlices.end(),
+                  [](const auto &a, const auto &b) {
+                      return a.start < b.start;
+                  });
+        // Merge time slices
+        std::vector<d4::TimeSlice> mergedTimeSlices;
+        mergedTimeSlices.emplace_back(sortedTimeSlices[0]);
+        for (int i = 1; i < sortedTimeSlices.size(); ++i) {
+            const auto &prev = mergedTimeSlices.back();
+            const auto &curr = sortedTimeSlices[i];
+            if (prev.end >= curr.start) {
+                mergedTimeSlices.back().end = curr.end;
+            } else {
+                mergedTimeSlices.emplace_back(curr);
+            }
+        }
+        // Add merged time slices to final bookings
+        for (const auto &timeSlice: mergedTimeSlices) {
+            finalBookings.emplace_back(timeSlice, cellId);
+        }
+    }
+
+    return finalBookings;
+}
 
 std::string ab::geoToH3(int h3Resolution, FPScalar latitude, FPScalar longitude) {
     const LatLng latLng{RADIANS(latitude), RADIANS(longitude)};

@@ -53,6 +53,21 @@ namespace ab {
                       speed(speed) {
             }
         };
+
+        struct Volume4D {
+        public:
+            GeoPolygon footprint;
+            float floor;
+            float ceiling;
+            TimeSlice timeSlice;
+
+            Volume4D(GeoPolygon footprint, float floor, float ceiling, const TimeSlice &timeSlice)
+                    : footprint(std::move(footprint)),
+                      floor(floor),
+                      ceiling(ceiling),
+                      timeSlice(timeSlice) {
+            }
+        };
     }
 
     struct CellBooking {
@@ -83,6 +98,16 @@ namespace ab {
                       FPScalar spatialVerticalBuffer = 30, int h3Resolution = 8);
 
     /**
+     * @brief Get the H3 cells that are intersected by the volume with their time slices
+     * @param volume4D the 4d volume
+
+     * @param h3Resolution the H3 resolution to use
+     * @return
+     */
+    std::vector<CellBooking>
+    getH3VolumeBookings(ab::d4::Volume4D volume4D, int h3Resolution = 8);
+
+    /**
      * @brief Get the H3D cells that are intersected by the trajectory with their time slices
      * @param trajectory4D a vector of 4D state vectors
      * @param temporalBackwardBuffer the temporal buffer applied before the expected cell ETA in seconds
@@ -98,6 +123,17 @@ namespace ab {
                        int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                        FPScalar spatialVerticalBuffer = 30, int h3Resolution = 8, int verticalResolution = 40);
 
+
+    /**
+     * @brief Get the H3D cells that are intersected by the volume with their time slices
+     * @param volume4D the 4d volume
+     * @param h3Resolution the H3 resolution to use
+     * @param verticalResolution the vertical resolution of the grid cells in meters
+     * @return
+     */
+    std::vector<CellBooking>
+    getH3DVolumeBookings(ab::d4::Volume4D volume4D, int h3Resolution = 8, int verticalResolution = 40);
+
     /**
      * @brief Get the S2 cells that are intersected by the trajectory with their time slices
      * @param trajectory4D a vector of 4D state vectors
@@ -112,6 +148,16 @@ namespace ab {
     getS2CellBookings(const std::vector<d4::StateVector4D> &trajectory4D, int temporalBackwardBuffer = 60 * 5,
                       int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                       FPScalar spatialVerticalBuffer = 30, int s2Resolution = 13);
+
+
+    /**
+     * @brief Get the S2 cells that are intersected by the volume with their time slices
+     * @param volume4D the 4d volume
+     * @param s2Resolution the S2 resolution to use
+     * @return
+     */
+    std::vector<CellBooking>
+    getS2VolumeBookings(ab::d4::Volume4D volume4D, int s2Resolution = 13);
 
     /**
      * @brief Get the S2 3D cells that are intersected by the trajectory with their time slices
@@ -129,6 +175,16 @@ namespace ab {
                         int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                         FPScalar spatialVerticalBuffer = 30, int s2Resolution = 13, int verticalResolution = 40);
 
+    /**
+     * @brief Get the S2 3D cells that are intersected by the volume with their time slices
+     * @param volume4D the 4d volume
+     * @param s2Resolution the S2 resolution to use
+     * @param verticalResolution the vertical resolution of the grid cells in meters
+     * @return
+     */
+    std::vector<CellBooking>
+    getS23DVolumeBookings(ab::d4::Volume4D volume4D, int s2Resolution = 13, int verticalResolution = 40);
+
 
     std::vector<CellBooking>
     getIndexedCellBookings(std::vector<d4::StateVector4D> trajectory4D,
@@ -136,6 +192,11 @@ namespace ab {
                            int temporalBackwardBuffer = 60 * 5,
                            int temporalForwardBuffer = 60 * 10, FPScalar spatialLateralBuffer = 100,
                            FPScalar spatialVerticalBuffer = 30);
+
+
+    std::vector<CellBooking>
+    getIndexedCellBookings(ab::d4::Volume4D volume4D,
+                           const std::function<std::string(double, double, double)> &indexer);
 
 
     std::string
