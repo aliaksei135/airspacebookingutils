@@ -56,6 +56,10 @@ PYBIND11_MODULE(_pyairspacebooking, m) {
                  }
             );
 
+    /*
+     * Trajectory Based Functions
+     */
+
     m.def("get_H3_cell_bookings", &ab::getH3CellBookings, "Get H3 cell bookings",
           "trajectory_4d"_a, "temporal_backward_buffer"_a = 60 * 5, "temporal_forward_buffer"_a = 60 * 10,
           "spatial_lateral_buffer"_a = 100.0, "spatial_vertical_buffer"_a = 30.0, "h3_resolution"_a = 8,
@@ -132,4 +136,77 @@ PYBIND11_MODULE(_pyairspacebooking, m) {
         list: a list of cell bookings
     )pbdoc");
 
+    /*
+     * Volume Based Functions
+     */
+
+    py::class_<ab::d4::Volume4D>(m, "Volume4D")
+            .def(py::init<ab::GeoPolygon, float, float, ab::d4::TimeSlice>())
+            .def_readwrite("footprint", &ab::d4::Volume4D::footprint, "Polygon footprint")
+            .def_readwrite("floor", &ab::d4::Volume4D::floor, "Floor altitude")
+            .def_readwrite("ceiling", &ab::d4::Volume4D::ceiling, "Ceiling altitude")
+            .def_readwrite("time_slice", &ab::d4::Volume4D::timeSlice, "Time slice")
+            .def("__repr__",
+                 [](const ab::d4::Volume4D &v) {
+                     return "Volume4D(footprint_size=" + std::to_string(v.footprint.size()) + ", floor=" +
+                            std::to_string(v.floor) + ", ceiling=" +
+                            std::to_string(v.ceiling) + ", time_slice=" +
+                            std::to_string(v.timeSlice.start.time_since_epoch().count()) + "," +
+                            std::to_string(v.timeSlice.end.time_since_epoch().count()) + ")";
+                 }
+            );
+
+    m.def("get_H3_volume_bookings", &ab::getH3VolumeBookings, "Get H3 volume bookings",
+          "volume_4d"_a, "h3_resolution"_a = 8,
+          R"pbdoc(
+    Get the H3 cells that are intersected by a 4D volume
+
+    Args:
+        volume_4d (Volume4D): a 4D volume
+        h3_resolution (int): the H3 resolution to use
+
+    Returns:
+        list: a list of cell bookings
+    )pbdoc");
+
+    m.def("get_H3D_volume_bookings", &ab::getH3DVolumeBookings, "Get H3D volume bookings",
+          "volume_4d"_a, "h3_resolution"_a = 8, "vertical_resolution"_a = 40,
+          R"pbdoc(
+    Get the H3 cells that are intersected by a 4D volume
+
+    Args:
+        volume_4d (Volume4D): a 4D volume
+        h3_resolution (int): the H3 resolution to use
+        vertical_resolution (int): the vertical resolution of the grid cells in meters
+
+    Returns:
+        list: a list of cell bookings
+    )pbdoc");
+
+    m.def("get_S2_volume_bookings", &ab::getS2VolumeBookings, "Get S2 volume bookings",
+          "volume_4d"_a, "s2_resolution"_a = 8,
+          R"pbdoc(
+    Get the S2 cells that are intersected by a 4D volume
+
+    Args:
+        volume_4d (Volume4D): a 4D volume
+        s2_resolution (int): the S2 resolution to use
+
+    Returns:
+        list: a list of cell bookings
+    )pbdoc");
+
+    m.def("get_S23D_volume_bookings", &ab::getS23DVolumeBookings, "Get S23D volume bookings",
+          "volume_4d"_a, "s2_resolution"_a = 8, "vertical_resolution"_a = 40,
+          R"pbdoc(
+    Get the S23D cells that are intersected by a 4D volume
+
+    Args:
+        volume_4d (Volume4D): a 4D volume
+        s2_resolution (int): the S2 resolution to use
+        vertical_resolution (int): the vertical resolution of the grid cells in meters
+
+    Returns:
+        list: a list of cell bookings
+    )pbdoc");
 }
