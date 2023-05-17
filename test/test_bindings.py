@@ -21,43 +21,53 @@ soton_vol1 = pab.Volume4D(
     [
         np.array([
             -1.3990738237161793,
-            50.939269655986465
+            50.939269655986465,
+            20
         ]),
         np.array([
             -1.4072955004378116,
-            50.93887864410402
+            50.93887864410402,
+            20
         ]),
         np.array([
             -1.404968613468128,
-            50.9223555576003
+            50.9223555576003,
+            20
         ]),
         np.array([
             -1.3790626052039556,
-            50.9277335377366
+            50.9277335377366,
+            20
         ]),
         np.array([
             -1.375494711850365,
-            50.931839940288654
+            50.931839940288654,
+            20
         ]),
         np.array([
             -1.3570347418888389,
-            50.93799886438836
+            50.93799886438836,
+            20
         ]),
         np.array([
             -1.3413670268645603,
-            50.95627531580857
+            50.95627531580857,
+            20
         ]),
         np.array([
             -1.3553283486832868,
-            50.95969524295688
+            50.95969524295688,
+            20
         ]),
         np.array([
             -1.3827856149278261,
-            50.93985616161723
+            50.93985616161723,
+            20
         ]),
         np.array([
             -1.3990738237161793,
-            50.939269655986465
+            50.939269655986465,
+            20
         ])
     ],
     20, 120,
@@ -140,19 +150,19 @@ def test_h3_volume_booking():
 
     # Test correct number of cells
     assert len(cells_r7) == 7
-    assert len(cells_r8) == 27
-    assert len(cells_r9) == 63
+    assert len(cells_r8) == 24
+    assert len(cells_r9) == 102
 
     # Test correct timeslice
     for cell in cells_r7:
-        assert cell.time_slice.start == soton_vol1[0].time
-        assert cell.time_slice.end == soton_vol1[-1].time
+        assert cell.time_slice.start == soton_vol1.time_slice.start
+        assert cell.time_slice.end == soton_vol1.time_slice.end
     for cell in cells_r8:
-        assert cell.time_slice.start == soton_vol1[0].time
-        assert cell.time_slice.end == soton_vol1[-1].time
+        assert cell.time_slice.start == soton_vol1.time_slice.start
+        assert cell.time_slice.end == soton_vol1.time_slice.end
     for cell in cells_r9:
-        assert cell.time_slice.start == soton_vol1[0].time
-        assert cell.time_slice.end == soton_vol1[-1].time
+        assert cell.time_slice.start == soton_vol1.time_slice.start
+        assert cell.time_slice.end == soton_vol1.time_slice.end
 
     # Test correct cell resolution
     for cell in cells_r7:
@@ -229,3 +239,4 @@ def test_h3d_cell_booking():
 if __name__ == '__main__':
     test_h3_cell_booking()
     test_h3d_cell_booking()
+    test_h3_volume_booking()
