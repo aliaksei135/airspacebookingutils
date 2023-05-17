@@ -86,5 +86,69 @@ def test_h3_cell_booking():
         assert cell.cell_id.endswith('ffff')
 
 
+def test_h3d_cell_booking():
+    temporal_backward_buffer = 60 * 5
+    temporal_forward_buffer = 60 * 10
+
+    cells_r7 = pab.get_H3D_cell_bookings(soton1, h3_resolution=7, temporal_backward_buffer=temporal_backward_buffer,
+                                         temporal_forward_buffer=temporal_forward_buffer)
+    cells_r8 = pab.get_H3D_cell_bookings(soton1, h3_resolution=8, temporal_backward_buffer=temporal_backward_buffer,
+                                         temporal_forward_buffer=temporal_forward_buffer)
+    cells_r9 = pab.get_H3D_cell_bookings(soton1, h3_resolution=9, temporal_backward_buffer=temporal_backward_buffer,
+                                         temporal_forward_buffer=temporal_forward_buffer)
+
+    # Test correct number of cells
+    assert len(cells_r7) == 14
+    assert len(cells_r8) == 26
+    assert len(cells_r9) == 62
+
+    # Test correct timeslice backward buffering
+    assert cells_r7[0].time_slice.start == soton1[0].time - datetime.timedelta(seconds=temporal_backward_buffer)
+    assert cells_r8[0].time_slice.start == soton1[0].time - datetime.timedelta(seconds=temporal_backward_buffer)
+    assert cells_r9[0].time_slice.start == soton1[0].time - datetime.timedelta(seconds=temporal_backward_buffer)
+
+    # Test correct timeslice forward buffering
+    assert cells_r7[0].time_slice.end >= soton1[0].time + datetime.timedelta(seconds=temporal_forward_buffer)
+    assert cells_r8[0].time_slice.end >= soton1[0].time + datetime.timedelta(seconds=temporal_forward_buffer)
+    assert cells_r9[0].time_slice.end >= soton1[0].time + datetime.timedelta(seconds=temporal_forward_buffer)
+
+    # Test duration is greater than the forward and backward buffers
+    assert cells_r7[-1].time_slice.end - cells_r7[0].time_slice.start > datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer)
+    assert cells_r8[-1].time_slice.end - cells_r8[0].time_slice.start > datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer)
+    assert cells_r9[-1].time_slice.end - cells_r9[0].time_slice.start > datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer)
+
+    # Test duration is approximately correct
+    distance = get_distance_2d(soton1[0], soton1[-1])
+    time_to_travel = datetime.timedelta(minutes=distance / soton1[0].speed)
+
+    assert (cells_r7[-1].time_slice.end - cells_r7[0].time_slice.start) - time_to_travel - datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer) < datetime.timedelta(minutes=3)
+    assert (cells_r8[-1].time_slice.end - cells_r8[0].time_slice.start) - time_to_travel - datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer) < datetime.timedelta(minutes=3)
+    assert (cells_r9[-1].time_slice.end - cells_r9[0].time_slice.start) - time_to_travel - datetime.timedelta(
+        seconds=temporal_backward_buffer + temporal_forward_buffer) < datetime.timedelta(minutes=3)
+
+    # Test sorted timeslices
+    for i in range(len(cells_r7) - 1):
+        assert cells_r7[i].time_slice.start <= cells_r7[i + 1].time_slice.start
+    for i in range(len(cells_r8) - 1):
+        assert cells_r8[i].time_slice.start <= cells_r8[i + 1].time_slice.start
+    for i in range(len(cells_r9) - 1):
+        assert cells_r9[i].time_slice.start <= cells_r9[i + 1].time_slice.start
+
+    # Test correct cell resolution
+    import re
+    for cell in cells_r7:
+        assert re.match('.*ffff.{2}$', cell.cell_id)
+    for cell in cells_r8:
+        assert re.match('.*fff.{2}$', cell.cell_id)
+    for cell in cells_r9:
+        assert re.match('.*ff.{2}$', cell.cell_id)
+
+
 if __name__ == '__main__':
     test_h3_cell_booking()
+    test_h3d_cell_booking()
