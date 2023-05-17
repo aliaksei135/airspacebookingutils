@@ -14,7 +14,8 @@ for lib in lib_dir.glob('*'):
     cdll.LoadLibrary(lib)
 
 from ._pyairspacebooking import __doc__, __version__, get_H3_cell_bookings, get_S2_cell_bookings, get_H3D_cell_bookings, \
-    get_S23D_cell_bookings, CellBooking, StateVector4D, TimeSlice
+    get_S23D_cell_bookings, CellBooking, StateVector4D, TimeSlice, Volume4D, get_H3_volume_bookings, \
+    get_S2_volume_bookings, get_H3D_volume_bookings, get_S23D_volume_bookings
 
 __all__ = [
     "__doc__",
@@ -26,6 +27,11 @@ __all__ = [
     "CellBooking",
     "StateVector4D",
     "TimeSlice",
+    "Volume4D",
+    "get_H3_volume_bookings",
+    "get_S2_volume_bookings",
+    "get_H3D_volume_bookings",
+    "get_S23D_volume_bookings"
 ]
 
 __dir__ = __all__

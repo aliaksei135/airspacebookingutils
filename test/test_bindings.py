@@ -17,6 +17,53 @@ soton1 = [
     ),
 ]
 
+soton_vol1 = pab.Volume4D(
+    [
+        np.array([
+            -1.3990738237161793,
+            50.939269655986465
+        ]),
+        np.array([
+            -1.4072955004378116,
+            50.93887864410402
+        ]),
+        np.array([
+            -1.404968613468128,
+            50.9223555576003
+        ]),
+        np.array([
+            -1.3790626052039556,
+            50.9277335377366
+        ]),
+        np.array([
+            -1.375494711850365,
+            50.931839940288654
+        ]),
+        np.array([
+            -1.3570347418888389,
+            50.93799886438836
+        ]),
+        np.array([
+            -1.3413670268645603,
+            50.95627531580857
+        ]),
+        np.array([
+            -1.3553283486832868,
+            50.95969524295688
+        ]),
+        np.array([
+            -1.3827856149278261,
+            50.93985616161723
+        ]),
+        np.array([
+            -1.3990738237161793,
+            50.939269655986465
+        ])
+    ],
+    20, 120,
+    pab.TimeSlice(datetime.datetime(2020, 1, 1, 12, 0, 0), datetime.datetime(2020, 1, 1, 12, 10, 0))
+)
+
 
 def get_distance_2d(sv1, sv2):
     # GeoPy wants lat, lon so need to swap
@@ -76,6 +123,36 @@ def test_h3_cell_booking():
         assert cells_r8[i].time_slice.start <= cells_r8[i + 1].time_slice.start
     for i in range(len(cells_r9) - 1):
         assert cells_r9[i].time_slice.start <= cells_r9[i + 1].time_slice.start
+
+    # Test correct cell resolution
+    for cell in cells_r7:
+        assert cell.cell_id.endswith('ffffff')
+    for cell in cells_r8:
+        assert cell.cell_id.endswith('fffff')
+    for cell in cells_r9:
+        assert cell.cell_id.endswith('ffff')
+
+
+def test_h3_volume_booking():
+    cells_r7 = pab.get_H3_volume_bookings(soton_vol1, h3_resolution=7)
+    cells_r8 = pab.get_H3_volume_bookings(soton_vol1, h3_resolution=8)
+    cells_r9 = pab.get_H3_volume_bookings(soton_vol1, h3_resolution=9)
+
+    # Test correct number of cells
+    assert len(cells_r7) == 7
+    assert len(cells_r8) == 27
+    assert len(cells_r9) == 63
+
+    # Test correct timeslice
+    for cell in cells_r7:
+        assert cell.time_slice.start == soton_vol1[0].time
+        assert cell.time_slice.end == soton_vol1[-1].time
+    for cell in cells_r8:
+        assert cell.time_slice.start == soton_vol1[0].time
+        assert cell.time_slice.end == soton_vol1[-1].time
+    for cell in cells_r9:
+        assert cell.time_slice.start == soton_vol1[0].time
+        assert cell.time_slice.end == soton_vol1[-1].time
 
     # Test correct cell resolution
     for cell in cells_r7:
