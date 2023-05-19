@@ -21,6 +21,7 @@ class abConan(ConanFile):
         self.requires("eigen/[>=3.3.9]")
         # self.requires("libcurl/[>=7.80.0]")
         self.requires("abseil/20230125.2")  # Required by S2
+        self.requires("openssl/1.1.1t")  # Required by S2
         self.requires("h3/4.1.0")
         self.requires("proj/[>=8.1.1]")
         self.requires("geos/[>=3.10.2]")
