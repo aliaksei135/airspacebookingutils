@@ -20,7 +20,7 @@ protected:
     };
 };
 
-TEST(ConflictTests, BasicXTest) {
+TEST_F(ConflictTests, BasicXTest) {
     const auto cells1 = ab::getH3CellBookings(traj1);
     const auto cells2 = ab::getH3CellBookings(traj2);
 }
