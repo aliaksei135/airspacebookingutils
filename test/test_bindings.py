@@ -151,7 +151,7 @@ def test_h3_volume_booking():
     # Test correct number of cells
     assert len(cells_r7) == 7
     assert len(cells_r8) == 24
-    assert len(cells_r9) == 102
+    assert len(cells_r9) == 103
 
     # Test correct timeslice
     for cell in cells_r7:

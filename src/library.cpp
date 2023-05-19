@@ -340,7 +340,7 @@ ab::getIndexedCellBookings(ab::d4::Volume4D volume4D,
     std::transform(volume4D.footprint.begin(), volume4D.footprint.end(),
                    std::back_inserter(reprojFootprintPoints),
                    [reproj](const auto &p) {
-                       const auto rc = util::reprojectCoordinate_r(reproj, p.x(), p.y(), p.z());
+                       const auto rc = util::reprojectCoordinate_r(reproj, p.y(), p.x(), p.z());
                        return ab::Position{rc.xyz.x, rc.xyz.y, rc.xyz.z};
                    });
     const auto reprojGeoPoly = ab::GeoPolygon(reprojFootprintPoints);
@@ -368,7 +368,7 @@ ab::getIndexedCellBookings(ab::d4::Volume4D volume4D,
                 const Index xyzC{x, y, z};
                 const auto projCoord = util::reprojectCoordinate_r(revReproj, xyzC.x(), xyzC.y(), xyzC.z());
                 clearedTimeSlices.emplace_back(volume4D.timeSlice,
-                                               indexer(projCoord.xyz.y, projCoord.xyz.x, projCoord.xyz.z));
+                                               indexer(projCoord.xyz.x, projCoord.xyz.y, projCoord.xyz.z));
             }
         }
     }
