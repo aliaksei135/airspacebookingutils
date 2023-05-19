@@ -1,0 +1,43 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Test Python Bindings
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10"]
+
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        python -m pip install scikit-build cmake ninja setuptools conan==1.59.0 wheel numpy pybind11
+        sudo apt-get update
+        sudo apt-get install build-essential libomp-dev libtbb-dev
+    - name: Install package
+      run: |
+        python -m pip install geopy
+        python -m pip install -v .
+    - name: Test with pytest
+      run: |
+        python -m pytest test
