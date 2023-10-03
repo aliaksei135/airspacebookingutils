@@ -14,9 +14,6 @@ class abConan(ConanFile):
 
     exports_sources = "CMakeLists.txt", "src/*"
 
-    def build_requirements(self):
-        self.build_requires("doxygen/[>=1.9.1]")
-
     def requirements(self):
         self.requires("eigen/[>=3.3.9]")
         # self.requires("libcurl/[>=7.80.0]")
@@ -37,10 +34,7 @@ class abConan(ConanFile):
         cmake_layout(self)
 
     def generate(self):
-        self.deps_cpp_info["doxygen"].set_property("skip_deps_file", True)
-
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_DOC"] = "ON"
         tc.variables["CMAKE_FIND_PACKAGE_PREFER_CONFIG"] = "ON"
         tc.generate()
 
