@@ -19,7 +19,7 @@ install_requires = [
     'scikit-build',
     'cmake',
     'ninja',
-    'conan==1.59.0',
+    'conan==1.60.0',
     'scikit-build-core>=0.3.3',
     'setuptools',
     'wheel'
