@@ -1,8 +1,9 @@
 import datetime
 
 import numpy as np
-import pyairspacebooking as pab
 from geopy.distance import distance
+
+import pyairspacebooking as pab
 
 soton1 = [
     pab.StateVector4D(

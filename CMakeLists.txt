@@ -146,11 +146,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC GEOS::GEOS)
 
 # S2 Geometry needs building from source
 find_package(absl CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC absl::base)
+target_link_libraries(${PROJECT_NAME} PUBLIC abseil::abseil)
 FETCHCONTENT_DECLARE(
         s2geometry
         GIT_REPOSITORY https://github.com/google/s2geometry.git
-        GIT_TAG master
+        GIT_TAG v0.10.0
 )
 FETCHCONTENT_MAKEAVAILABLE(s2geometry)
 target_link_libraries(${PROJECT_NAME} PUBLIC s2)
