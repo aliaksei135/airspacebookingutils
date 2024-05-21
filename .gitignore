@@ -513,3 +513,5 @@ FodyWeavers.xsd
 *.sln.iml
 /conan_imports_manifest.txt
 /CMakeUserPresets.json
+/_skbuild/
+/.github/
