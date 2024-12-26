@@ -105,8 +105,10 @@ if (NOT EXISTS "${PROJECT_BINARY_DIR}/conan.cmake")
             TLS_VERIFY ON)
 endif ()
 include(${CMAKE_BINARY_DIR}/conan.cmake)
+set(CONAN_DISABLE_CHECK_COMPILER ON)
 conan_cmake_run(CONANFILE conanfile.py
         BASIC_SETUP
+        PROFILE default
         BUILD missing)
 
 # Don't build tests for deps
