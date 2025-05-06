@@ -82,10 +82,12 @@ if (NOT DEFINED PROJ_DATA OR PROJ_DATA STREQUAL "")
 else ()
     message(STATUS "Found PROJ data dir: ${PROJ_DATA}")
 endif ()
-    # Check that proj.db actually exists in PROJ_DATA
-    if (NOT EXISTS "${PROJ_DATA}/proj.db")
-        message(FATAL_ERROR "Could not find proj.db in assumed PROJ_DATA dir: ${PROJ_DATA}")
-    endif ()
+
+# Check that proj.db actually exists in PROJ_DATA
+if (NOT EXISTS "${PROJ_DATA}/proj.db")
+    message(FATAL_ERROR "Could not find proj.db in assumed PROJ_DATA dir: ${PROJ_DATA}")
+endif ()
+
 add_custom_target(ABU_proj_data
         ${CMAKE_COMMAND} -E copy_directory ${PROJ_DATA} ${PROJECT_BINARY_DIR}/bin)
 add_dependencies(${PROJECT_NAME} ABU_proj_data)
@@ -93,23 +95,6 @@ add_dependencies(${PROJECT_NAME} ABU_proj_data)
 # Set this to a compile def that is used when PROJ contexts are created
 target_compile_definitions(${PROJECT_NAME} PUBLIC PROJ_DATA_PATH="${PROJ_DATA}")
 # @formatter:on
-
-# # Hack to find PROJ data dir from the conan package
-# if(NOT PROJ_DATA)
-#     set(PROJ_DATA "${CMAKE_CURRENT_SOURCE_DIR}/data")
-#     if(EXISTS "${PROJ_DATA}")
-#         message(STATUS "Using PROJ data from ${PROJ_DATA}")
-#     else()
-#         message(FATAL_ERROR "PROJ data directory not found. Please set PROJ_DATA to the correct path.")
-#     endif()
-# endif()
-
-# message(STATUS "Copying PROJ data from ${PROJ_DATA} to ${PROJECT_BINARY_DIR}/bin")
-# add_custom_target(ABU_proj_data
-#     ${CMAKE_COMMAND} copy_directory ${PROJ_DATA} ${PROJECT_BINARY_DIR}/bin
-# )
-# add_dependencies(${PROJECT_NAME} ABU_proj_data)
-# target_compile_definitions(${PROJECT_NAME} PUBLIC PROJ_DATA_PATH="${PROJ_DATA}")
 
 # Optional TBB support
 find_package(TBB CONFIG)
