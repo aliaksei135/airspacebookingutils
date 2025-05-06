@@ -1,0 +1,33 @@
+[build-system]
+requires = [
+  "scikit-build-core-conan",
+  "pybind11",
+  "cmake",
+  "ninja",
+  "conan"
+]
+build-backend = "scikit_build_core_conan.build"
+
+[project]
+name = "pyairspacebooking"
+version = "0.0.1"
+description = "Strategic Deconfliction Utilities"
+authors = [{ name = "Aliaksei Pilko", email = "dev@apilko.me" }]
+requires-python = ">=3.7"
+
+
+[tool.scikit-build-core-conan]
+path = "."
+build = "missing"
+conanfile = "conanfile.py"
+output-folder = "build"
+wheel.packages = ["python/pyairspacebooking"]
+cmake.verbose = true
+cmake.args = [
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DBUILD_TESTING=OFF",
+  "-DBUILD_EXAMPLES=OFF",
+  "-DCMAKE_INSTALL_RPATH=$ORIGIN",
+  "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON",
+  "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF"
+]
