@@ -132,11 +132,6 @@ Once built and installed, the `pyairspacebooking` module provides access to the 
 
 If you have followed the build steps above, the command `pip install .` (or `pip install -e .` for an editable/development install) from the root of the repository will build and install the Python package.
 
-If pre-compiled wheels were available for your platform, you might install it directly via:
-```bash
-pip install pyairspacebooking # (If published to PyPI)
-```
-
 ### Basic Usage Example
 
 Here's a simple example demonstrating how to calculate H3 cell bookings for a 4D trajectory:
